@@ -30,7 +30,8 @@ idemTest str =
 
 
 type Token
-    = LB Meta
+    = BS Meta
+    | LB Meta
     | RB Meta
     | S String Meta
     | W String Meta
@@ -42,6 +43,9 @@ type Token
 setIndex : Int -> Token -> Token
 setIndex k token =
     case token of
+        BS meta ->
+            BS { meta | index = k }
+
         LB meta ->
             LB { meta | index = k }
 
@@ -86,7 +90,8 @@ type Mode
 
 
 type TokenType
-    = TLB
+    = TBS
+    | TLB
     | TRB
     | TS
     | TW
@@ -98,6 +103,9 @@ type TokenType
 type_ : Token -> TokenType
 type_ token =
     case token of
+        BS _ ->
+            TBS
+
         LB _ ->
             TLB
 
@@ -123,6 +131,9 @@ type_ token =
 getMeta : Token -> Meta
 getMeta token =
     case token of
+        BS m ->
+            m
+
         LB m ->
             m
 
@@ -148,11 +159,14 @@ getMeta token =
 stringValue : Token -> String
 stringValue token =
     case token of
+        BS _ ->
+            "\\"
+
         LB _ ->
-            "["
+            "{"
 
         RB _ ->
-            "]"
+            "}"
 
         S str _ ->
             str
@@ -178,6 +192,9 @@ toString tokens =
 length : Token -> Int
 length token =
     case token of
+        BS meta ->
+            meta.end - meta.begin
+
         LB meta ->
             meta.end - meta.begin
 
@@ -267,6 +284,15 @@ nextStep state =
                     else
                         -- otherwise, update the current token so as to merge words into a single phrase
                         ( state.tokens, state.tokenIndex, updateCurrentToken state.tokenIndex token state.currentToken )
+
+                else if type_ token == TBS then
+                    -- commit a left bracket token immediately, taking care to commit the currentToken if it contains text
+                    case state.currentToken of
+                        Nothing ->
+                            ( setIndex state.tokenIndex token :: state.tokens, state.tokenIndex + 1, Nothing )
+
+                        Just textToken ->
+                            ( setIndex (state.tokenIndex + 1) token :: setIndex state.tokenIndex textToken :: state.tokens, state.tokenIndex + 2, Nothing )
 
                 else if type_ token == TLB then
                     -- commit a left bracket token immediately, taking care to commit the currentToken if it contains text
@@ -388,7 +414,7 @@ tokenParser mode start index =
 
 
 languageChars =
-    [ '[', ']', '`', '$' ]
+    [ '\\', '{', '}', '`', '$' ]
 
 
 mathChars =
@@ -403,8 +429,9 @@ tokenParser_ : Int -> Int -> TokenParser
 tokenParser_ start index =
     Parser.oneOf
         [ textParser start index
-        , leftBracketParser start index
-        , rightBracketParser start index
+        , backslashParser start index
+        , leftBraceParser start index
+        , rightBraceParser start index
         , mathParser start index
         , codeParser start index
         , whiteSpaceParser start index
@@ -435,15 +462,21 @@ whiteSpaceParser start index =
         |> Parser.map (\data -> W data.content { begin = start, end = start, index = index })
 
 
-leftBracketParser : Int -> Int -> TokenParser
-leftBracketParser start index =
-    PT.text (\c -> c == '[') (\_ -> False)
+backslashParser : Int -> Int -> TokenParser
+backslashParser start index =
+    PT.text (\c -> c == '\\') (\_ -> False)
+        |> Parser.map (\_ -> BS { begin = start, end = start, index = index })
+
+
+leftBraceParser : Int -> Int -> TokenParser
+leftBraceParser start index =
+    PT.text (\c -> c == '{') (\_ -> False)
         |> Parser.map (\_ -> LB { begin = start, end = start, index = index })
 
 
-rightBracketParser : Int -> Int -> TokenParser
-rightBracketParser start index =
-    PT.text (\c -> c == ']') (\_ -> False)
+rightBraceParser : Int -> Int -> TokenParser
+rightBraceParser start index =
+    PT.text (\c -> c == '}') (\_ -> False)
         |> Parser.map (\_ -> RB { begin = start, end = start, index = index })
 
 
