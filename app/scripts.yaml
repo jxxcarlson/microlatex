@@ -1,0 +1,13 @@
+   scripts:
+
+     make:
+        - echo "run vr make from ./editor-prepare"
+
+     optimize: elm make --optimize src/Main.elm --output=public/Main.js
+
+     live:  npx elm-live src/TestMain.elm -- --output Main.js
+
+     loc: cloc --by-file src/Render
+
+     update-vendor:
+         - cp  ../../codemirror/editor.bundle.js public/assets
