@@ -1,5 +1,6 @@
 module Parser.Expression exposing
     ( State
+    , applyRule
     , parse
     , parseToState
     , parseTokenList
@@ -7,11 +8,58 @@ module Parser.Expression exposing
 
 import Either exposing (Either(..))
 import List.Extra
-import Parser.Expr exposing (Expr(..))
+import Parser.Expr exposing (Expr(..), ExprT(..))
 import Parser.Helpers as Helpers exposing (Step(..), loop)
 import Parser.Match as M
 import Parser.Symbol as Symbol exposing (Symbol(..))
 import Parser.Token as Token exposing (Meta, Token(..), TokenType(..))
+
+
+applyRule : List ExprT -> Maybe ExprT
+applyRule exprs =
+    case exprs of
+        [ T (S t m) ] ->
+            Just (E (Text t m))
+
+        [ T (BS m1), T (S t m2), EL exprList ] ->
+            let
+                end =
+                    case List.head exprList of
+                        Nothing ->
+                            m2.end
+
+                        Just expr ->
+                            expr |> getMeta |> .end
+
+                m =
+                    { begin = m1.begin, end = end, index = m1.index }
+            in
+            Just (E (Expr t exprList m))
+
+        [ T (LB _), E e, T (RB _) ] ->
+            Just (EL [ e ])
+
+        [ EL exprList1, EL exprList2 ] ->
+            Just (EL (exprList1 ++ exprList2))
+
+        _ ->
+            Nothing
+
+
+getMeta : Expr -> Meta
+getMeta expr =
+    case expr of
+        Expr _ _ m ->
+            m
+
+        Text _ m ->
+            m
+
+        Verbatim _ _ m ->
+            m
+
+        Error _ ->
+            { begin = 0, end = 0, index = -1 }
 
 
 
@@ -104,6 +152,10 @@ run state =
 
 nextStep : State -> Step State State
 nextStep state =
+    let
+        _ =
+            Debug.log "STATE" state
+    in
     case List.Extra.getAt state.tokenIndex state.tokens of
         Nothing ->
             if List.isEmpty state.stack then
@@ -137,6 +189,9 @@ pushToken token state =
             pushOnStack token state
 
         CodeToken _ ->
+            pushOnStack token state
+
+        BS _ ->
             pushOnStack token state
 
         LB _ ->

@@ -104,15 +104,14 @@ editRecord2 =
 
 suite : Test
 suite =
-    Test.only <|
-        describe "Differ"
-            [ test "subst" <|
-                \_ -> Differ.diff a1 b1 |> Expect.equal diff1
-            , test "differentialTransform" <|
-                \_ -> Differ.differentialTransform double dR a1x |> Expect.equal [ 2, 20, 6 ]
+    describe "Differ"
+        [ test "subst" <|
+            \_ -> Differ.diff a1 b1 |> Expect.equal diff1
+        , test "differentialTransform" <|
+            \_ -> Differ.differentialTransform double dR a1x |> Expect.equal [ 2, 20, 6 ]
 
-            --, test "differentialCompiler" <|
-            --    \_ -> Expect.equal newRendered editRecord2Rendered
-            --
-            ---- newEditRecord.rendered editRecord2.rendered
-            ]
+        --, test "differentialCompiler" <|
+        --    \_ -> Expect.equal newRendered editRecord2Rendered
+        --
+        ---- newEditRecord.rendered editRecord2.rendered
+        ]

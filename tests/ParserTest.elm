@@ -12,7 +12,7 @@ parseTest label input output =
     test label <|
         \_ ->
             input
-                |> Simple.parse
+                |> Simple.parse 0
                 |> .committed
                 |> Expect.equal output
 
@@ -36,7 +36,7 @@ errorTest label input output =
 idem : String -> String
 idem str =
     str
-        |> Expression.parseToState
+        |> Expression.parseToState 0
         |> .committed
         |> Text.print
 

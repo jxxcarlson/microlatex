@@ -26,7 +26,8 @@ type alias StateS =
 
 
 type SimpleToken
-    = LBS
+    = BSS
+    | LBS
     | RBS
     | SS String
     | WS String
@@ -58,6 +59,9 @@ toStateS state =
 simplifyToken : Token -> SimpleToken
 simplifyToken token =
     case token of
+        BS _ ->
+            BSS
+
         LB _ ->
             LBS
 

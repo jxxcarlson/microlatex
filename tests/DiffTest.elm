@@ -28,10 +28,9 @@ diffTest label a b expected =
 
 suite : Test
 suite =
-    Test.only <|
-        describe "diff trees"
-            [ diffTest "diff1" a1 a2 []
-            ]
+    describe "diff trees"
+        [ diffTest "diff1" a1 a2 []
+        ]
 
 
 a1 =

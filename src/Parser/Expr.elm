@@ -1,4 +1,7 @@
-module Parser.Expr exposing (Expr(..))
+module Parser.Expr exposing
+    ( Expr(..)
+    , ExprT(..)
+    )
 
 {-| The syntax tree for the parser is of type Expr. In the examples below, we use `Parser.Expression.parse`;
 in `parse 0 STRING` 0 is the line number at which the text begins. The Meta component
@@ -40,3 +43,13 @@ type Expr
     | Text String Meta
     | Verbatim String String Meta
     | Error String
+
+
+type ExprT
+    = T Parser.Token.Token
+    | E Expr
+    | EL (List Expr)
+
+
+
+-- | EL (List Expr)
