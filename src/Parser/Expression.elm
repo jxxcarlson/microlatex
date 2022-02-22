@@ -1,13 +1,13 @@
 module Parser.Expression exposing
     ( State
     , applyRule
-    , applyRuleList
-    , applyRuleListFP
-    , applyRuleListR
     , parse
     , parseToState
     , parseTokenList
     , prepare
+    , rulesFP
+    , rulesOnce
+    , rulesTwice
     )
 
 import Either exposing (Either(..))
@@ -66,31 +66,31 @@ applyRule exprs =
             Nothing
 
 
-applyRuleListR : List ExprT -> List ExprT
-applyRuleListR exprs =
-    case applyRuleList exprs of
+rulesTwice : List ExprT -> List ExprT
+rulesTwice exprs =
+    case rulesOnce exprs of
         a :: rest ->
-            a :: applyRuleList rest
+            a :: rulesOnce rest
 
         _ ->
             exprs
 
 
-applyRuleListFP : List ExprT -> List ExprT
-applyRuleListFP exprs =
+rulesFP : List ExprT -> List ExprT
+rulesFP exprs =
     let
         exprs2 =
-            applyRuleListR exprs
+            rulesTwice exprs
     in
     if exprs == exprs2 then
         exprs
 
     else
-        applyRuleListFP (applyRuleListR exprs2)
+        rulesFP (rulesTwice exprs2)
 
 
-applyRuleList : List ExprT -> List ExprT
-applyRuleList exprs =
+rulesOnce : List ExprT -> List ExprT
+rulesOnce exprs =
     case exprs of
         (T (S t m)) :: rest ->
             E (Text t m) :: rest

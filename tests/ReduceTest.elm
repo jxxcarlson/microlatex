@@ -43,46 +43,46 @@ suite =
                 [ test "Rule 1" <|
                     \_ ->
                         [ T (S "foo" fm) ]
-                            |> PE.applyRuleList
+                            |> PE.rulesOnce
                             |> Expect.equal [ E (Text "foo" fm) ]
                 , test "Rule 2" <|
                     \_ ->
                         [ EL [ Text "bar" fm ], E (Text "foo" fm), T (BS fm) ]
-                            |> PE.applyRuleList
+                            |> PE.rulesOnce
                             |> Expect.equal [ E (Expr "foo" [ Text "bar" fm ] fm) ]
                 , test "Rule 3" <|
                     \_ ->
                         [ T (RB fm), E (Text "foo" fm), T (LB fm) ]
-                            |> PE.applyRuleList
+                            |> PE.rulesOnce
                             |> Expect.equal [ EL [ Text "foo" fm ] ]
                 , test "Rule 4" <|
                     \_ ->
                         [ EL [ Text "bar" fm ], EL [ Text "foo" fm ] ]
-                            |> PE.applyRuleList
+                            |> PE.rulesOnce
                             |> Expect.equal [ EL [ Text "foo" fm, Text "bar" fm ] ]
                 , test "\\foo{bar}" <|
                     \_ ->
                         PT.run "\\foo{bar}"
                             |> PE.prepare
-                            |> PE.applyRuleList
-                            |> PE.applyRuleList
+                            |> PE.rulesOnce
+                            |> PE.rulesOnce
                             |> Expect.equal [ E (Expr "foo" [ Text "bar" { begin = 5, end = 7, index = 3 } ] { begin = 0, end = 7, index = 0 }) ]
                 , test "\\foo{bar}{baz}" <|
                     \_ ->
                         PT.run "\\foo{bar}{baz}"
                             |> PE.prepare
-                            |> PE.applyRuleListR
-                            |> PE.applyRuleListR
-                            |> PE.applyRuleListR
+                            |> PE.rulesTwice
+                            |> PE.rulesTwice
+                            |> PE.rulesTwice
                             |> Expect.equal [ E (Expr "foo" [ Text "bar" { begin = 5, end = 7, index = 3 }, Text "baz" { begin = 10, end = 12, index = 6 } ] { begin = 0, end = 7, index = 0 }) ]
                 , test "\\foo{\\bar{baz}}" <|
                     \_ ->
                         PT.run "\\foo{\\bar{baz}}"
                             |> PE.prepare
-                            |> PE.applyRuleListR
-                            |> PE.applyRuleListR
-                            |> PE.applyRuleListR
-                            |> PE.applyRuleListR
+                            |> PE.rulesTwice
+                            |> PE.rulesTwice
+                            |> PE.rulesTwice
+                            |> PE.rulesTwice
                             |> Expect.equal [ E (Expr "foo" [ Expr "bar" [ Text "baz" { begin = 10, end = 12, index = 6 } ] { begin = 5, end = 12, index = 3 } ] { begin = 0, end = 12, index = 0 }) ]
 
                 --
@@ -90,19 +90,19 @@ suite =
                     \_ ->
                         PT.run "\\foo{bar}"
                             |> PE.prepare
-                            |> PE.applyRuleListFP
+                            |> PE.rulesFP
                             |> Expect.equal [ E (Expr "foo" [ Text "bar" { begin = 5, end = 7, index = 3 } ] { begin = 0, end = 7, index = 0 }) ]
                 , test "\\foo{bar}{baz} (FP)" <|
                     \_ ->
                         PT.run "\\foo{bar}{baz}"
                             |> PE.prepare
-                            |> PE.applyRuleListFP
+                            |> PE.rulesFP
                             |> Expect.equal [ E (Expr "foo" [ Text "bar" { begin = 5, end = 7, index = 3 }, Text "baz" { begin = 10, end = 12, index = 6 } ] { begin = 0, end = 7, index = 0 }) ]
                 , test "\\foo{\\bar{baz}} (FP)" <|
                     \_ ->
                         PT.run "\\foo{\\bar{baz}}"
                             |> PE.prepare
-                            |> PE.applyRuleListFP
+                            |> PE.rulesFP
                             |> Expect.equal [ E (Expr "foo" [ Expr "bar" [ Text "baz" { begin = 10, end = 12, index = 6 } ] { begin = 5, end = 12, index = 3 } ] { begin = 0, end = 12, index = 0 }) ]
                 ]
             ]
