@@ -2,6 +2,7 @@ module Parser.Expression exposing
     ( State
     , applyRule
     , applyRuleList
+    , applyRuleListFP
     , applyRuleListR
     , parse
     , parseToState
@@ -73,6 +74,19 @@ applyRuleListR exprs =
 
         _ ->
             exprs
+
+
+applyRuleListFP : List ExprT -> List ExprT
+applyRuleListFP exprs =
+    let
+        exprs2 =
+            applyRuleListR exprs
+    in
+    if exprs == exprs2 then
+        exprs
+
+    else
+        applyRuleListFP (applyRuleListR exprs2)
 
 
 applyRuleList : List ExprT -> List ExprT
