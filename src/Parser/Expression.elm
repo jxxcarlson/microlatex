@@ -1,9 +1,12 @@
 module Parser.Expression exposing
     ( State
     , applyRule
+    , applyRuleList
+    , applyRuleListR
     , parse
     , parseToState
     , parseTokenList
+    , prepare
     )
 
 import Either exposing (Either(..))
@@ -13,6 +16,22 @@ import Parser.Helpers as Helpers exposing (Step(..), loop)
 import Parser.Match as M
 import Parser.Symbol as Symbol exposing (Symbol(..))
 import Parser.Token as Token exposing (Meta, Token(..), TokenType(..))
+
+
+prepare : List Token -> List ExprT
+prepare exprs =
+    let
+        f expr =
+            case expr of
+                T (S t m) ->
+                    E (Text t m)
+
+                _ ->
+                    expr
+    in
+    exprs
+        |> List.map T
+        |> List.map f
 
 
 applyRule : List ExprT -> Maybe ExprT
@@ -44,6 +63,47 @@ applyRule exprs =
 
         _ ->
             Nothing
+
+
+applyRuleListR : List ExprT -> List ExprT
+applyRuleListR exprs =
+    case applyRuleList exprs of
+        a :: rest ->
+            a :: applyRuleList rest
+
+        _ ->
+            exprs
+
+
+applyRuleList : List ExprT -> List ExprT
+applyRuleList exprs =
+    case exprs of
+        (T (S t m)) :: rest ->
+            E (Text t m) :: rest
+
+        (EL exprList) :: (E (Text t m2)) :: (T (BS m1)) :: rest ->
+            let
+                end =
+                    case List.head exprList of
+                        Nothing ->
+                            m2.end
+
+                        Just expr ->
+                            expr |> getMeta |> .end
+
+                m =
+                    { begin = m1.begin, end = end, index = m1.index }
+            in
+            E (Expr t exprList m) :: rest
+
+        (T (RB _)) :: (E e) :: (T (LB _)) :: rest ->
+            EL [ e ] :: rest
+
+        (EL exprList2) :: (EL exprList1) :: rest ->
+            EL (exprList1 ++ exprList2) :: rest
+
+        _ ->
+            exprs
 
 
 getMeta : Expr -> Meta
