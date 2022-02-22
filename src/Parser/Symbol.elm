@@ -5,7 +5,8 @@ import Parser.Token exposing (Token(..))
 
 
 type Symbol
-    = L
+    = B
+    | L
     | R
     | O
     | M
@@ -15,6 +16,9 @@ type Symbol
 value : Symbol -> Int
 value symbol =
     case symbol of
+        B ->
+            0
+
         L ->
             1
 
@@ -39,6 +43,9 @@ balance symbols =
 symbolToString : Symbol -> String
 symbolToString symbol =
     case symbol of
+        B ->
+            "B"
+
         L ->
             "L"
 
@@ -73,6 +80,9 @@ convertTokens2 tokens =
 toSymbol : Token -> Maybe Symbol
 toSymbol token =
     case token of
+        BS _ ->
+            Just B
+
         LB _ ->
             Just L
 

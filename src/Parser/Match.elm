@@ -1,7 +1,7 @@
 module Parser.Match exposing (deleteAt, match, reducible, splitAt)
 
 import Parser.Helpers exposing (Step(..), loop)
-import Parser.Symbol as Symbol exposing (Symbol(..), value)
+import Parser.Symbol as Symbol exposing (Symbol(..))
 
 
 reducible : List Symbol -> Bool
@@ -21,6 +21,9 @@ reducibleF : List Symbol -> Bool
 reducibleF symbols =
     case List.head symbols of
         Nothing ->
+            True
+
+        Just B ->
             True
 
         Just R ->
@@ -68,39 +71,89 @@ splitAt k list =
 
 
 type alias State =
-    { symbols : List Symbol, index : Int, brackets : Int }
+    { start : Bool, symbols : List Symbol, index : Int, brackets : Int }
 
 
+{-|
+
+    > [L, R] |> match
+    Just 1
+
+    > [L, R, L, R] |> match
+    Just 1
+
+    > [L, L, R, R] |> match
+    Just 3
+
+-}
 match : List Symbol -> Maybe Int
 match symbols =
     case List.head symbols of
         Nothing ->
+            let
+                _ =
+                    Debug.log "(STOP)" "head is empty"
+            in
             Nothing
 
         Just symbol ->
-            if value symbol < 0 then
+            if Symbol.value symbol < 0 then
+                let
+                    _ =
+                        Debug.log "(to Nothing, symbol" symbol
+                in
                 Nothing
 
             else
-                loop { symbols = List.drop 1 symbols, index = 1, brackets = value symbol } nextStep
+                let
+                    start =
+                        Symbol.value symbol == 1
+
+                    initialState =
+                        { start = start, symbols = List.drop 1 symbols, index = 1, brackets = Symbol.value symbol } |> Debug.log "STATE (INIT)"
+                in
+                loop { start = start, symbols = List.drop 1 symbols, index = 1, brackets = Symbol.value symbol } nextStep
 
 
 nextStep : State -> Step State (Maybe Int)
 nextStep state =
+    let
+        _ =
+            Debug.log "STATE" state
+    in
     case List.head state.symbols of
         Nothing ->
+            let
+                _ =
+                    Debug.log "LIST" "no more symbols"
+            in
             Done Nothing
 
         Just sym ->
             let
+                start =
+                    if not state.start then
+                        Symbol.value sym == 1
+
+                    else
+                        state.start
+
                 brackets =
-                    state.brackets + value sym
+                    state.brackets + Symbol.value sym
             in
-            if brackets < 0 then
+            if brackets < 0 && state.start then
+                let
+                    _ =
+                        Debug.log "STATUS" "brackets < 0"
+                in
                 Done Nothing
 
-            else if brackets == 0 then
+            else if brackets == 0 && state.start then
+                let
+                    _ =
+                        Debug.log "STATUS" "brackets == 0"
+                in
                 Done (Just state.index)
 
             else
-                Loop { symbols = List.drop 1 state.symbols, index = state.index + 1, brackets = brackets }
+                Loop { start = start, symbols = List.drop 1 state.symbols, index = state.index + 1, brackets = brackets }
