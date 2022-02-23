@@ -257,7 +257,7 @@ reduceState state =
         case List.head symbols of
             Just B ->
                 case eval state.lineNumber (state.stack |> List.reverse) of
-                    (Expr "invisible" [ Text message _ ] _) :: rest ->
+                    (Expr "??" [ Text message _ ] _) :: rest ->
                         { state | stack = [], committed = rest ++ state.committed, messages = Helpers.prependMessage state.lineNumber message state.messages }
 
                     whatever ->
@@ -315,7 +315,7 @@ evalList lineNumber tokens =
                 TLB ->
                     case M.match (Symbol.convertTokens2 tokens) of
                         Nothing ->
-                            [ errorMessageInvisible lineNumber "Error on match", Text "error on match" dummyLoc ]
+                            errorMessage3Part lineNumber "\\x" (Token.toString tokens) "}"
 
                         Just k ->
                             let
@@ -339,16 +339,18 @@ evalList lineNumber tokens =
             []
 
 
+errorMessage3Part : Int -> String -> String -> String -> List Expr
+errorMessage3Part lineNumber a b c =
+    [ Expr "blue" [ Text a dummyLoc ] dummyLoc, Expr "blue" [ Text b dummyLoc ] dummyLoc, Expr "red" [ Text c dummyLoc ] dummyLoc ]
+
+
 errorMessageInvisible : Int -> String -> Expr
 errorMessageInvisible lineNumber message =
     let
         m =
-            -- message ++ " (line " ++ String.fromInt lineNumber ++ ")"
             message
-
-        --  ++ " (line " ++ String.fromInt lineNumber ++ ")"
     in
-    Expr "invisible" [ Text m dummyLoc ] dummyLoc
+    Expr "red" [ Text message dummyLoc ] dummyLoc
 
 
 errorMessage : String -> Expr
