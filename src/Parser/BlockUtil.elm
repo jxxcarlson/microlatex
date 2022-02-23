@@ -127,7 +127,7 @@ toExpressionBlock lineNumber block =
 
                 ( firstLine, rawContent_ ) =
                     if List.member name [ "item", "numbered" ] then
-                        split_ block.content |> Debug.log "(f,r)"
+                        split_ block.content
 
                     else
                         split block.content
@@ -279,9 +279,6 @@ toIntermediateBlock block =
         blockType =
             classify block
 
-        _ =
-            Debug.log "CONTENT (1)" block.content
-
         state =
             Parser.Expression.parseToState block.lineNumber block.content
     in
@@ -306,14 +303,14 @@ toIntermediateBlock block =
         OrdinaryBlock args ->
             let
                 name =
-                    List.head args |> Maybe.withDefault "anon" |> Debug.log "NAME"
+                    List.head args |> Maybe.withDefault "anon"
 
                 ( firstLine, rawContent_ ) =
                     if List.member name [ "item", "numbered" ] then
-                        split_ block.content |> Debug.log "(first, raw_)"
+                        split_ block.content
 
                     else
-                        split_ block.content |> Debug.log "(first, raw_)"
+                        split_ block.content
 
                 messages =
                     if rawContent_ == "" && not (List.member (List.head args |> Maybe.withDefault "!!") bareBlockNames) then
@@ -346,7 +343,7 @@ toIntermediateBlock block =
                 , lineNumber = block.lineNumber
                 , id = String.fromInt block.lineNumber
                 , numberOfLines = block.numberOfLines
-                , content = content |> Debug.log "CONTENT (2)"
+                , content = content
                 , messages = messages
                 , blockType = blockType
                 , children = []
@@ -432,10 +429,7 @@ split_ : String -> ( String, String )
 split_ str_ =
     let
         lines =
-            str_ |> String.trim |> String.lines |> Debug.log "LINES"
-
-        n =
-            List.length lines |> Debug.log "N"
+            str_ |> String.trim |> String.lines
     in
     case lines of
         first :: rest ->

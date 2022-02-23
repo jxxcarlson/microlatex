@@ -1,14 +1,10 @@
 module Parser.Expression exposing
     ( State
-    , applyRule
     , eval
     , isReducible
     , parse
     , parseToState
     , prepare
-    , rulesFP
-    , rulesOnce
-    , rulesTwice
     )
 
 import Either exposing (Either(..))
@@ -36,108 +32,22 @@ prepare exprs =
         |> List.map f
 
 
-applyRule : List ExprT -> Maybe ExprT
-applyRule exprs =
-    case exprs of
-        [ T (S t m) ] ->
-            Just (E (Text t m))
 
-        [ T (BS m1), T (S t m2), EL exprList ] ->
-            let
-                end =
-                    case List.head exprList of
-                        Nothing ->
-                            m2.end
-
-                        Just expr ->
-                            expr |> getMeta |> .end
-
-                m =
-                    { begin = m1.begin, end = end, index = m1.index }
-            in
-            Just (E (Expr t exprList m))
-
-        [ T (LB _), E e, T (RB _) ] ->
-            Just (EL [ e ])
-
-        [ EL exprList1, EL exprList2 ] ->
-            Just (EL (exprList1 ++ exprList2))
-
-        _ ->
-            Nothing
-
-
-rulesTwice : List ExprT -> List ExprT
-rulesTwice exprs =
-    case rulesOnce exprs of
-        a :: rest ->
-            a :: rulesOnce rest
-
-        _ ->
-            exprs
-
-
-rulesFP : List ExprT -> List ExprT
-rulesFP exprs =
-    let
-        exprs2 =
-            rulesTwice exprs
-    in
-    if exprs == exprs2 then
-        exprs
-
-    else
-        rulesFP (rulesTwice exprs2)
-
-
-rulesOnce : List ExprT -> List ExprT
-rulesOnce exprs =
-    case exprs of
-        (T (S t m)) :: rest ->
-            E (Text t m) :: rest
-
-        (EL exprList) :: (E (Text t m2)) :: (T (BS m1)) :: rest ->
-            let
-                end =
-                    case List.head exprList of
-                        Nothing ->
-                            m2.end
-
-                        Just expr ->
-                            expr |> getMeta |> .end
-
-                m =
-                    { begin = m1.begin, end = end, index = m1.index }
-            in
-            E (Expr t exprList m) :: rest
-
-        (T (RB _)) :: (E e) :: (T (LB _)) :: rest ->
-            EL [ e ] :: rest
-
-        (EL exprList2) :: (EL exprList1) :: rest ->
-            EL (exprList1 ++ exprList2) :: rest
-
-        _ ->
-            exprs
-
-
-getMeta : Expr -> Meta
-getMeta expr =
-    case expr of
-        Expr _ _ m ->
-            m
-
-        Text _ m ->
-            m
-
-        Verbatim _ _ m ->
-            m
-
-        Error _ ->
-            { begin = 0, end = 0, index = -1 }
-
-
-
+--getMeta : Expr -> Meta
+--getMeta expr =
+--    case expr of
+--        Expr _ _ m ->
+--            m
+--
+--        Text _ m ->
+--            m
+--
+--        Verbatim _ _ m ->
+--            m
+--
+--        Error _ ->
+--            { begin = 0, end = 0, index = -1 }
+--
 -- TYPES
 
 
@@ -353,7 +263,6 @@ reduceState state =
                     whatever ->
                         { state | stack = [], committed = whatever ++ state.committed }
 
-            -- { state | stack = [], committed = eval (state.stack |> List.reverse) ++ state.committed }
             Just M ->
                 { state | stack = [], committed = Verbatim "math" (String.replace "$" "" <| Token.toString <| List.reverse state.stack) { begin = 0, end = 0, index = 0 } :: state.committed }
 
