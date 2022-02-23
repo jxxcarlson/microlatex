@@ -229,7 +229,7 @@ reduceState : State -> State
 reduceState state =
     let
         peek =
-            List.Extra.getAt state.tokenIndex state.tokens |> Debug.log "PEEK (1)"
+            List.Extra.getAt state.tokenIndex state.tokens
 
         isStringToken maybeTok =
             case maybeTok of
@@ -240,12 +240,8 @@ reduceState state =
                     False
 
         reducible_ =
-            (isReducible state.stack
-                |> Debug.log "isReducible"
-            )
-                && (isStringToken (peek |> Debug.log "PEEK")
-                        |> Debug.log "isStringToken"
-                   )
+            isReducible state.stack
+                && isStringToken peek
     in
     if state.tokenIndex >= state.numberOfTokens || reducible_ then
         let
@@ -264,10 +260,10 @@ reduceState state =
             Just M ->
                 let
                     content =
-                        state.stack |> List.reverse |> Debug.log "TOKENS" |> Token.toString |> Debug.log "MATHH"
+                        state.stack |> List.reverse |> Token.toString
 
                     trailing =
-                        String.right 1 content |> Debug.log "TRAILING"
+                        String.right 1 content
 
                     committed =
                         if trailing == "$" && content == "$" then
