@@ -17,6 +17,15 @@ Pythagoras sez: $a^2 + b^2 = c^2$
 There are infinitely many primes $p \\equiv 1\\ mod\\ 4$
 \\end{theorem}
 
+Display Math:
+
+$$
+\\int_0^1 x^n dx = \\frac{1}{n+1}
+$$
+
+
+Equation Block:
+
 
 \\begin{equation}
 \\int_0^1 x^n dx = \\frac{1}{n+1}
