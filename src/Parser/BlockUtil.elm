@@ -326,11 +326,21 @@ toIntermediateBlock block =
                     else
                         rawContent_
 
+                endString =
+                    "\\end{" ++ name ++ "}"
+
                 content_ =
-                    String.replace ("\\end{" ++ name ++ "}") "" rawContent
+                    if String.contains endString rawContent then
+                        String.replace endString "" rawContent
+
+                    else if not (List.member name [ "item", "numbered" ]) then
+                        rawContent ++ "\n\\red{add end " ++ name ++ " tag}"
+
+                    else
+                        rawContent
 
                 content =
-                    if List.member name verbatimBlockNames then
+                    if List.member name verbatimBlockNames && not (List.member name [ "item", "numbered" ]) then
                         content_ ++ "\nend"
 
                     else
@@ -377,35 +387,40 @@ toIntermediateBlock block =
                 name =
                     List.head args |> Maybe.withDefault "anon"
 
-                content_ =
-                    String.replace ("\\end{" ++ name ++ "}") "" rawContent
+                endString =
+                    "\\end{" ++ name ++ "}"
 
-                content__ =
+                --content_ =
+                --    String.replace ("\\end{" ++ name ++ "}") "" rawContent
+                ( revisedName, revisedBlocktype, content_ ) =
+                    if String.contains endString rawContent then
+                        ( name, blockType, String.replace endString "" rawContent |> addEnd )
+
+                    else if not (List.member name [ "math" ]) then
+                        ( "code", VerbatimBlock [ "code" ], "\\begin{" ++ name ++ "}\n" ++ rawContent ++ "\n\\end{??}" )
+
+                    else
+                        ( name, blockType, rawContent )
+
+                addEnd str =
                     if List.member name verbatimBlockNames then
-                        content_ ++ "\nend"
+                        str ++ "\nend"
 
                     else
-                        content_
-
-                content2 =
-                    if blockType == VerbatimBlock [ "code" ] then
-                        String.replace "```" "" rawContent
-
-                    else
-                        rawContent
+                        str
             in
             IntermediateBlock
-                { name = List.head args
+                { name = Just revisedName
                 , args = List.drop 1 args
                 , indent = block.indent
                 , lineNumber = block.lineNumber
                 , id = String.fromInt block.lineNumber
                 , numberOfLines = block.numberOfLines
-                , content = content__
+                , content = content_
 
                 --, content = Right state.committed
                 , messages = messages
-                , blockType = blockType
+                , blockType = revisedBlocktype
                 , children = []
                 , sourceText = block.content
                 }

@@ -84,6 +84,7 @@ markupDict =
         , ( "boldItalic", \g s exprList -> boldItalic g s exprList )
         , ( "strike", \g s exprList -> strike g s exprList )
         , ( "underline", \g s exprList -> underline g s exprList )
+        , ( "comment", \g s exprList -> Element.none )
 
         -- COLOR
         , ( "red", \g s exprList -> red g s exprList )
@@ -115,6 +116,8 @@ markupDict =
 
         --
         , ( "dollarSign", \_ _ _ -> Element.el [] (Element.text "$") )
+        , ( "bs", \g s exprList -> Element.paragraph [] (Element.text "\\" :: List.map (render g s) exprList) )
+        , ( "texarg", \g s exprList -> Element.paragraph [] ((Element.text "{" :: List.map (render g s) exprList) ++ [ Element.text " }" ]) )
         , ( "backTick", \_ _ _ -> Element.el [] (Element.text "`") )
         ]
 
