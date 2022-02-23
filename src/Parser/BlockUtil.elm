@@ -311,6 +311,19 @@ toIntermediateBlock block =
 
                     else
                         rawContent_
+
+                name =
+                    List.head args |> Maybe.withDefault "anon"
+
+                content_ =
+                    String.replace ("\\end{" ++ name ++ "}") "" rawContent
+
+                content =
+                    if List.member name verbatimBlockNames then
+                        content_ ++ "\nend"
+
+                    else
+                        content_
             in
             IntermediateBlock
                 { name = List.head args
@@ -319,9 +332,7 @@ toIntermediateBlock block =
                 , lineNumber = block.lineNumber
                 , id = String.fromInt block.lineNumber
                 , numberOfLines = block.numberOfLines
-                , content = rawContent
-
-                --, content = Right state.committed
+                , content = content
                 , messages = messages
                 , blockType = blockType
                 , children = []
@@ -352,7 +363,20 @@ toIntermediateBlock block =
                         _ ->
                             state.messages
 
-                content =
+                name =
+                    List.head args |> Maybe.withDefault "anon"
+
+                content_ =
+                    String.replace ("\\end{" ++ name ++ "}") "" rawContent
+
+                content__ =
+                    if List.member name verbatimBlockNames then
+                        content_ ++ "\nend"
+
+                    else
+                        content_
+
+                content2 =
                     if blockType == VerbatimBlock [ "code" ] then
                         String.replace "```" "" rawContent
 
@@ -366,7 +390,7 @@ toIntermediateBlock block =
                 , lineNumber = block.lineNumber
                 , id = String.fromInt block.lineNumber
                 , numberOfLines = block.numberOfLines
-                , content = content
+                , content = content__
 
                 --, content = Right state.committed
                 , messages = messages
@@ -383,8 +407,11 @@ split str_ =
     let
         lines =
             str_ |> String.trim |> String.lines
+
+        n =
+            List.length lines
     in
-    ( List.head lines |> Maybe.withDefault "", lines |> List.drop 1 |> String.join "\n" )
+    ( List.head lines |> Maybe.withDefault "", lines |> List.take (n - 1) |> List.drop 1 |> String.join "\n" )
 
 
 toL0Block : Tree.BlocksV.Block -> Block
@@ -431,17 +458,32 @@ toL0Block block =
                 }
 
 
+verbatimBlockNames =
+    [ "equation", "aligned", "code" ]
+
+
 classify : Tree.BlocksV.Block -> BlockType
 classify block =
     let
         str_ =
             String.trim block.content
-    in
-    if String.left 2 str_ == "||" then
-        VerbatimBlock (str_ |> String.lines |> List.head |> Maybe.withDefault "" |> String.words |> List.drop 1)
 
-    else if String.left 1 str_ == "|" then
-        OrdinaryBlock (str_ |> String.lines |> List.head |> Maybe.withDefault "" |> String.words |> List.drop 1)
+        lines =
+            String.lines str_
+
+        firstLine =
+            List.head lines |> Maybe.withDefault "FIRSTLINE"
+    in
+    if String.left 7 firstLine == "\\begin{" then
+        let
+            name =
+                firstLine |> String.replace "\\begin{" "" |> String.replace "}" ""
+        in
+        if List.member name verbatimBlockNames then
+            VerbatimBlock [ name ]
+
+        else
+            OrdinaryBlock [ name ]
 
     else if String.left 2 str_ == "$$" then
         VerbatimBlock [ "math" ]
