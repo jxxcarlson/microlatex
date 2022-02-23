@@ -122,8 +122,15 @@ toExpressionBlock lineNumber block =
 
         OrdinaryBlock args ->
             let
+                name =
+                    List.head args |> Maybe.withDefault "anon"
+
                 ( firstLine, rawContent_ ) =
-                    split block.content
+                    if List.member name [ "item", "numbered" ] then
+                        split_ block.content |> Debug.log "(f,r)"
+
+                    else
+                        split block.content
 
                 messages =
                     if rawContent_ == "" then
@@ -272,6 +279,9 @@ toIntermediateBlock block =
         blockType =
             classify block
 
+        _ =
+            Debug.log "CONTENT (1)" block.content
+
         state =
             Parser.Expression.parseToState block.lineNumber block.content
     in
@@ -295,8 +305,15 @@ toIntermediateBlock block =
 
         OrdinaryBlock args ->
             let
+                name =
+                    List.head args |> Maybe.withDefault "anon" |> Debug.log "NAME"
+
                 ( firstLine, rawContent_ ) =
-                    split block.content
+                    if List.member name [ "item", "numbered" ] then
+                        split_ block.content |> Debug.log "(first, raw_)"
+
+                    else
+                        split_ block.content |> Debug.log "(first, raw_)"
 
                 messages =
                     if rawContent_ == "" && not (List.member (List.head args |> Maybe.withDefault "!!") bareBlockNames) then
@@ -311,9 +328,6 @@ toIntermediateBlock block =
 
                     else
                         rawContent_
-
-                name =
-                    List.head args |> Maybe.withDefault "anon"
 
                 content_ =
                     String.replace ("\\end{" ++ name ++ "}") "" rawContent
@@ -332,7 +346,7 @@ toIntermediateBlock block =
                 , lineNumber = block.lineNumber
                 , id = String.fromInt block.lineNumber
                 , numberOfLines = block.numberOfLines
-                , content = content
+                , content = content |> Debug.log "CONTENT (2)"
                 , messages = messages
                 , blockType = blockType
                 , children = []
@@ -414,6 +428,27 @@ split str_ =
     ( List.head lines |> Maybe.withDefault "", lines |> List.take (n - 1) |> List.drop 1 |> String.join "\n" )
 
 
+split_ : String -> ( String, String )
+split_ str_ =
+    let
+        lines =
+            str_ |> String.trim |> String.lines |> Debug.log "LINES"
+
+        n =
+            List.length lines |> Debug.log "N"
+    in
+    case lines of
+        first :: rest ->
+            ( first, String.join "\n" rest )
+
+        _ ->
+            ( "first", "rest" )
+
+
+
+-- ( List.head lines |> Maybe.withDefault "", lines |> List.drop 1 |> String.join "\n" )
+
+
 toL0Block : Tree.BlocksV.Block -> Block
 toL0Block block =
     let
@@ -474,7 +509,13 @@ classify block =
         firstLine =
             List.head lines |> Maybe.withDefault "FIRSTLINE"
     in
-    if String.left 7 firstLine == "\\begin{" then
+    if String.left 5 firstLine == "\\item" then
+        OrdinaryBlock [ "item" ]
+
+    else if String.left 9 firstLine == "\\numbered" then
+        OrdinaryBlock [ "numbered" ]
+
+    else if String.left 7 firstLine == "\\begin{" then
         let
             name =
                 firstLine |> String.replace "\\begin{" "" |> String.replace "}" ""

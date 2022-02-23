@@ -330,7 +330,14 @@ reduceState state =
                     False
 
         reducible_ =
-            isReducible state.stack && isStringToken peek
+            (isReducible state.stack
+                && isStringToken peek
+            )
+                || ((List.head state.stack |> Maybe.map Token.type_)
+                        == Just TMath
+                        && (List.head (List.drop (List.length state.stack - 1) state.stack) |> Maybe.map Token.type_)
+                        == Just TMath
+                   )
     in
     if state.tokenIndex >= state.numberOfTokens || reducible_ then
         let
@@ -348,7 +355,7 @@ reduceState state =
 
             -- { state | stack = [], committed = eval (state.stack |> List.reverse) ++ state.committed }
             Just M ->
-                { state | stack = [], committed = Verbatim "math" (Token.toString <| unbracket <| List.reverse state.stack) { begin = 0, end = 0, index = 0 } :: state.committed }
+                { state | stack = [], committed = Verbatim "math" (Debug.log "MATHH" (Token.toString <| List.reverse state.stack)) { begin = 0, end = 0, index = 0 } :: state.committed }
 
             Just C ->
                 { state | stack = [], committed = Verbatim "code" (Token.toString <| unbracket <| List.reverse state.stack) { begin = 0, end = 0, index = 0 } :: state.committed }
