@@ -108,5 +108,8 @@ toSymbol2 token =
         RB _ ->
             R
 
+        MathToken _ ->
+            M
+
         _ ->
             O

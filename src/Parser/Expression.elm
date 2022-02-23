@@ -229,7 +229,7 @@ reduceState : State -> State
 reduceState state =
     let
         peek =
-            List.Extra.getAt state.tokenIndex state.tokens
+            List.Extra.getAt state.tokenIndex state.tokens |> Debug.log "PEEK (1)"
 
         isStringToken maybeTok =
             case maybeTok of
@@ -240,14 +240,12 @@ reduceState state =
                     False
 
         reducible_ =
-            isReducible state.stack
-                && isStringToken peek
-
-        --|| ((List.head state.stack |> Maybe.map Token.type_)
-        --        == Just TMath
-        --        && (List.head (List.drop (List.length state.stack - 1) state.stack) |> Maybe.map Token.type_)
-        --        == Just TMath
-        --   )
+            (isReducible state.stack
+                |> Debug.log "isReducible"
+            )
+                && (isStringToken (peek |> Debug.log "PEEK")
+                        |> Debug.log "isStringToken"
+                   )
     in
     if state.tokenIndex >= state.numberOfTokens || reducible_ then
         let
@@ -264,7 +262,33 @@ reduceState state =
                         { state | stack = [], committed = whatever ++ state.committed }
 
             Just M ->
-                { state | stack = [], committed = Verbatim "math" (String.replace "$" "" <| Token.toString <| List.reverse state.stack) { begin = 0, end = 0, index = 0 } :: state.committed }
+                let
+                    content =
+                        state.stack |> List.reverse |> Debug.log "TOKENS" |> Token.toString |> Debug.log "MATHH"
+
+                    trailing =
+                        String.right 1 content |> Debug.log "TRAILING"
+
+                    committed =
+                        if trailing == "$" && content == "$" then
+                            let
+                                ( first_, rest_ ) =
+                                    case state.committed of
+                                        first :: rest ->
+                                            ( first, rest )
+
+                                        _ ->
+                                            ( Expr "red" [ Text "????" dummyLoc ] dummyLoc, [] )
+                            in
+                            first_ :: Expr "red" [ Text "$" dummyLoc ] dummyLoc :: rest_
+
+                        else if trailing == "$" then
+                            Verbatim "math" (String.replace "$" "" content) { begin = 0, end = 0, index = 0 } :: state.committed
+
+                        else
+                            Expr "red" [ Text "$" dummyLoc ] dummyLoc :: Verbatim "math" (String.replace "$" "" content) { begin = 0, end = 0, index = 0 } :: state.committed
+                in
+                { state | stack = [], committed = committed }
 
             Just C ->
                 { state | stack = [], committed = Verbatim "code" (String.replace "`" "" <| Token.toString <| unbracket <| List.reverse state.stack) { begin = 0, end = 0, index = 0 } :: state.committed }
@@ -298,24 +322,25 @@ eval lineNumber tokens =
     case tokens of
         -- The reversed token list is of the form [LB name EXPRS RB], so return [Expr name (evalList EXPRS)]
         (S t m2) :: rest ->
-            Text t m2 :: evalList lineNumber rest
+            Text t m2 :: evalList Nothing lineNumber rest
 
         (BS m1) :: (S name m2) :: rest ->
-            [ Expr name (evalList lineNumber rest) m1 ]
+            [ Expr name (evalList (Just name) lineNumber rest) m1 ]
 
         _ ->
-            [ errorMessageInvisible lineNumber "missing macro name", errorMessage <| "??" ]
+            -- [ errorMessageInvisible lineNumber "missing macro name", errorMessage <| "??" ]
+            errorMessage2Part lineNumber "\\" "??{??}"
 
 
-evalList : Int -> List Token -> List Expr
-evalList lineNumber tokens =
+evalList : Maybe String -> Int -> List Token -> List Expr
+evalList macroName lineNumber tokens =
     case List.head tokens of
         Just token ->
             case Token.type_ token of
                 TLB ->
                     case M.match (Symbol.convertTokens2 tokens) of
                         Nothing ->
-                            errorMessage3Part lineNumber "\\x" (Token.toString tokens) "}"
+                            errorMessage3Part lineNumber ("\\" ++ (macroName |> Maybe.withDefault "x")) (Token.toString tokens) "??}"
 
                         Just k ->
                             let
@@ -325,18 +350,23 @@ evalList lineNumber tokens =
                                 aa =
                                     a |> List.take (List.length a - 1) |> List.drop 1
                             in
-                            eval lineNumber aa ++ evalList lineNumber b
+                            eval lineNumber aa ++ evalList Nothing lineNumber b
 
                 _ ->
                     case exprOfToken token of
                         Just expr ->
-                            expr :: evalList lineNumber (List.drop 1 tokens)
+                            expr :: evalList Nothing lineNumber (List.drop 1 tokens)
 
                         Nothing ->
                             [ errorMessageInvisible lineNumber "Error converting token", Text "error converting Token" dummyLoc ]
 
         _ ->
             []
+
+
+errorMessage2Part : Int -> String -> String -> List Expr
+errorMessage2Part lineNumber a b =
+    [ Expr "red" [ Text b dummyLoc ] dummyLoc, Expr "blue" [ Text a dummyLoc ] dummyLoc ]
 
 
 errorMessage3Part : Int -> String -> String -> String -> List Expr
