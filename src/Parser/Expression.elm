@@ -317,23 +317,9 @@ push token state =
 
 reduceState : State -> State
 reduceState state =
-    -- if M.reducible symbols then
     let
-        startsWithSpace str =
-            String.left 1 str == " "
-
-        ( peek, reducible__ ) =
-            case List.Extra.getAt state.tokenIndex state.tokens of
-                Nothing ->
-                    ( Nothing, True )
-
-                Just tok ->
-                    case tok of
-                        S str _ ->
-                            ( Just tok, startsWithSpace str )
-
-                        _ ->
-                            ( Just tok, False )
+        peek =
+            List.Extra.getAt state.tokenIndex state.tokens
 
         isStringToken maybeTok =
             case maybeTok of
