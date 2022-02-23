@@ -90,18 +90,10 @@ match : List Symbol -> Maybe Int
 match symbols =
     case List.head symbols of
         Nothing ->
-            let
-                _ =
-                    Debug.log "(STOP)" "head is empty"
-            in
             Nothing
 
         Just symbol ->
             if Symbol.value symbol < 0 then
-                let
-                    _ =
-                        Debug.log "(to Nothing, symbol" symbol
-                in
                 Nothing
 
             else
@@ -110,23 +102,15 @@ match symbols =
                         Symbol.value symbol == 1
 
                     initialState =
-                        { start = start, symbols = List.drop 1 symbols, index = 1, brackets = Symbol.value symbol } |> Debug.log "STATE (INIT)"
+                        { start = start, symbols = List.drop 1 symbols, index = 1, brackets = Symbol.value symbol }
                 in
                 loop { start = start, symbols = List.drop 1 symbols, index = 1, brackets = Symbol.value symbol } nextStep
 
 
 nextStep : State -> Step State (Maybe Int)
 nextStep state =
-    let
-        _ =
-            Debug.log "STATE" state
-    in
     case List.head state.symbols of
         Nothing ->
-            let
-                _ =
-                    Debug.log "LIST" "no more symbols"
-            in
             Done Nothing
 
         Just sym ->
@@ -142,17 +126,9 @@ nextStep state =
                     state.brackets + Symbol.value sym
             in
             if brackets < 0 && state.start then
-                let
-                    _ =
-                        Debug.log "STATUS" "brackets < 0"
-                in
                 Done Nothing
 
             else if brackets == 0 && state.start then
-                let
-                    _ =
-                        Debug.log "STATUS" "brackets == 0"
-                in
                 Done (Just state.index)
 
             else
