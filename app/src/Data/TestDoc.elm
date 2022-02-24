@@ -5,9 +5,7 @@ text =
     """
 
 
-\\begin{title}
-MicroLaTeX Technical Notes
-\\end{title}
+\\title{MicroLaTeX Technical Notes}
 
 This is a \\i{test} and so is \\b{this}.
 

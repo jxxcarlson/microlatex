@@ -86,6 +86,9 @@ markupDict =
         , ( "underline", \g s exprList -> underline g s exprList )
         , ( "comment", \g s exprList -> Element.none )
 
+        -- LATEX
+        , ( "title", \g s exprList -> title g s exprList )
+
         -- COLOR
         , ( "red", \g s exprList -> red g s exprList )
         , ( "blue", \g s exprList -> blue g s exprList )
@@ -344,6 +347,10 @@ italic g s exprList =
 
 boldItalic g s exprList =
     simpleElement [ Font.italic, Font.bold, Element.paddingEach { left = 0, right = 2, top = 0, bottom = 0 } ] g s exprList
+
+
+title g s exprList =
+    simpleElement [ Font.size 36, Element.paddingEach { left = 0, right = 2, top = 0, bottom = 0 } ] g s exprList
 
 
 term g s exprList =

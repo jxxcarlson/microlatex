@@ -9,14 +9,17 @@ module Compiler.ASTTools exposing
     , stringValueOfList
     , tableOfContents
     , title
+    , titleOLD
     , toExprRecord
     )
 
 import Either exposing (Either(..))
 import L0 exposing (SyntaxTree)
 import Maybe.Extra
+import Parser exposing ((|.), (|=), Parser)
 import Parser.Block exposing (BlockType(..), ExpressionBlock(..))
 import Parser.Expr exposing (Expr(..))
+import Parser.Language exposing (Language(..))
 import Tree
 
 
@@ -62,9 +65,54 @@ idOfMatchingBlockContent key (ExpressionBlock { sourceText, id }) =
         Nothing
 
 
-title : L0.SyntaxTree -> List ExpressionBlock
-title ast =
+titleOLD : SyntaxTree -> List ExpressionBlock
+titleOLD ast =
     filterBlocksByArgs "title" ast
+
+
+title : Language -> L0.SyntaxTree -> String
+title lang ast =
+    case lang of
+        -- filterBlocksByArgs "title" ast
+        L0Lang ->
+            "((Title unknown (L0)))"
+
+        MicroLaTeXLang ->
+            ast
+                |> root
+                |> Maybe.map (filterBlock "title")
+                |> Maybe.andThen List.head
+                |> Maybe.andThen getText
+                |> Maybe.withDefault "((untitled))"
+
+
+root : L0.SyntaxTree -> Maybe ExpressionBlock
+root syntaxTree =
+    Maybe.map Tree.label (List.head syntaxTree)
+
+
+
+-- AST: [Tree (ExpressionBlock { args = [], blockType = Paragraph, children = [], content = Right [Expr "title" [Text "<<untitled>>" { begin = 7, end = 18, index = 3 }] { begin = 0, end = 0, index = 0 }], id = "0", indent = 1, lineNumber = 0, messages = [], name = Nothing, numberOfLines = 1, sourceText = "\\title{<<untitled>>}" })
+
+
+filterBlock : String -> ExpressionBlock -> List Expr
+filterBlock key (ExpressionBlock { content }) =
+    let
+        name : Expr -> String
+        name expr =
+            case expr of
+                Expr name_ _ _ ->
+                    name_
+
+                _ ->
+                    "_no name_"
+    in
+    case content of
+        Left str ->
+            []
+
+        Right exprList ->
+            List.filter (\expr -> String.contains key (name expr)) exprList
 
 
 extractTextFromSyntaxTreeByKey key syntaxTree =

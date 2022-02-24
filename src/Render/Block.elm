@@ -104,6 +104,7 @@ blockDict =
     Dict.fromList
         [ ( "indent", indented )
         , ( "heading", heading )
+        , ( "section", heading )
         , ( "title", \_ _ _ _ _ -> Element.none )
         , ( "subtitle", \_ _ _ _ _ -> Element.none )
         , ( "author", \_ _ _ _ _ -> Element.none )

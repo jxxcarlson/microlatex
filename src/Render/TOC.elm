@@ -149,7 +149,7 @@ getHeadings : L0.SyntaxTree -> { title : Maybe (List Expr), subtitle : Maybe (Li
 getHeadings ast =
     let
         data =
-            ast |> Compiler.ASTTools.title |> Compiler.ASTTools.toExprRecord
+            ast |> Compiler.ASTTools.titleOLD |> Compiler.ASTTools.toExprRecord
 
         title : Maybe (List Expr)
         title =
