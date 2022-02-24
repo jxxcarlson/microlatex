@@ -363,7 +363,7 @@ toIntermediateBlock block =
         VerbatimBlock args ->
             let
                 ( firstLine, rawContent ) =
-                    split_ block.content |> Debug.log "VerbatimBlock (f,raw)"
+                    split_ block.content
 
                 messages =
                     case blockType of
