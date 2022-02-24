@@ -503,7 +503,7 @@ toL0Block block =
 
 
 verbatimBlockNames =
-    [ "equation", "aligned", "code" ]
+    [ "comment", "equation", "aligned", "code" ]
 
 
 classify : Tree.BlocksV.Block -> BlockType
