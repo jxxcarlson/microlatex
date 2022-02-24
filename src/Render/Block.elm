@@ -117,6 +117,7 @@ blockDict =
         , ( "corollary", env "Corollary" )
         , ( "problem", env "Problem" )
         , ( "remark", env "Remark" )
+        , ( "example", env "Example" )
         , ( "note", env "Note" )
         , ( "env", env_ )
         , ( "item", item )
@@ -131,7 +132,13 @@ verbatimDict =
         , ( "equation", equation )
         , ( "aligned", aligned )
         , ( "code", renderCode )
+        , ( "comment", renderComment )
         ]
+
+
+renderComment : Int -> Settings -> List String -> String -> String -> Element L0Msg
+renderComment _ _ _ _ _ =
+    Element.none
 
 
 equation : Int -> Settings -> List String -> String -> String -> Element L0Msg
@@ -259,7 +266,7 @@ renderDisplayMath prefix count settings args id str =
             String.lines str
 
         lines =
-            String.lines str |> List.filter (\line -> not (String.left 2 line == "$$"))
+            String.lines str |> List.filter (\line -> not (String.left 2 line == "$$")) |> List.filter (\line -> not (String.left 6 line == "[label"))
 
         n =
             List.length allLines
